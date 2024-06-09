@@ -3,6 +3,8 @@
 #define MAX_THREADS 8
 using namespace std;
 
+#include <thread>
+
 Matrix::Matrix(int a, int b) { // generate a matrix (2D array) of dimensions a,b
     this->n = a;
     this->m = b;
@@ -45,27 +47,39 @@ int** Matrix::T(){
     return MT;
 }
 
+void Matrix::computeBlock(int start, int end, Matrix* t, Matrix* n, Matrix* c) {
+    // Somehow this is slower when the loops are replaced with do-whiles 
+    Loop (i, start, end)
+        Loop (j, 0, c->m)
+            Loop (k, 0, t->m)
+                c->M[i][j] += t->M[i][k] * n->M[k][j];
+}
+
 Matrix* Matrix::multiplyMatrix(Matrix* N) {
     if (this->m != N->n) {
         return NULL;
     }
     Matrix *c = new Matrix(this->n,N->m);
 
-    /*
-    
-    BEGIN STUDENT CODE
-    INPUT : this : pointer to matrix A
-            N    : pointer to matrix B
+    int total = c->n;
+    int part = total / MAX_THREADS;
+    int remainder = total % MAX_THREADS;
 
-    OUTPUT : C   : pointer to matrix C = A*B
+    std::thread threads[MAX_THREADS]; 
 
-    matrix multiplication is defined as following:
-    if input matrix A is a matrix of dimensions n1 by n2 and B is a matrix of dimension n2 by n3 then matrix product C = A*B is defined as
-    C[i][j] = sum over k = 0 to n2-1 {A[i][k]*B[k][j]}
+    for (int i = 0; i < MAX_THREADS; ++i) {
+        threads[i] = std::thread([=]() {
+            int start = i * part + std::min(i, remainder);
+            int end = start + part + (i < remainder);
+            computeBlock(start, end, this, N, c);
+        });
+    }
 
-    */
-    cout<<"STUDENT CODE NOT IMPLEMENTED!\n";
-    exit(1);
+    for (int i = 0; i < 8; ++i) {
+        if (threads[i].joinable()) {
+            threads[i].join();
+        }
+    }
     return c;
 }
 

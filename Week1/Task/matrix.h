@@ -19,6 +19,9 @@ class Matrix {
         void initialiseMatrix();
         void inputMatrix();
         void displayMatrix();
+
+        void computeBlock(int start, int end, Matrix* A, Matrix* B, Matrix* C);
+
         int** T();
         Matrix* multiplyMatrix(Matrix* N);
 

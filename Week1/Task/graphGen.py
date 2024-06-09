@@ -25,7 +25,7 @@ def run_executable_with_input(executable_path, input_integer):
 
     if return_code != 0:
         # If the executable encountered an error, print the error message
-        print("Error:", error)
+        print("Error:", error, " Path:", executable_path)
         return None
     else:
         # Split the output into two numbers
@@ -45,6 +45,7 @@ if __name__ == '__main__':
         x.append(i)
         naive.append(timeNaive)
         pragma.append(timePragma)
+        print(i," Naive time:", timeNaive, " Parallel time:", timePragma)
 
     plt.figure()
     plt.plot(x,naive,'r-',label='naive method')

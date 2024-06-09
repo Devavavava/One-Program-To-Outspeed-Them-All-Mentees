@@ -14,9 +14,9 @@ void welcome(int id){
         1. Try this code with both cout and printf
         2. Try uncommenting the second printf and observe the outputs
     */
-    // cout << "I am thread " << id << endl;
+    cout << "I am thread " << id << endl;
     printf("I am thread %d\n",id);
-    // printf("Bye %d\n",id);
+    printf("Bye %d\n",id);
     m.unlock();
     return;
 }
