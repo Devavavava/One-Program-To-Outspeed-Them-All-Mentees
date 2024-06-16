@@ -21,6 +21,7 @@ int main(){
     cin >> n;   
     auto start = chrono::high_resolution_clock::now();
     ll f = fibonacci_R(n);
+    f = f+1;
     auto end = chrono::high_resolution_clock::now();
     auto elapsed = chrono::duration_cast<std::chrono::duration<double>>(end - start);
     cout << "Time spent " << elapsed.count() << "\n";
