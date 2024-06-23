@@ -27,9 +27,10 @@ int main () {
     auto start = std::chrono::high_resolution_clock::now();
 
 	// TASK 1 CODE BEGINS HERE
-	std::cout<<"STUDENT CODE FOR TASK 1 NOT IMPLEMENTED\n";
-	wait();
-	exit(1);
+	A2.write_to_device(); // copy data from host memory to device memory
+	B2.write_to_device();
+	mul_kernel.run(); // run add_kernel on the device
+	C2.read_from_device(); // copy data from device memory to host memory
 	// TASK 1 CODE ENDS HERE
     
     auto end = std::chrono::high_resolution_clock::now();

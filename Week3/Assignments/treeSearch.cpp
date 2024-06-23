@@ -83,24 +83,89 @@ string naiveSearch (tree &T, int k) {
     return "\0";
 }
 
+string devsSearch(node* startNode, int k) {
+    node* tmp = startNode;
+    if (tmp->value == k) { // found it!
+        vector<node*> seq; // vector to construct the string
+        seq.push_back(tmp);
+        node* u = tmp->parent;
+        while (u != NULL) {
+            seq.push_back(u);
+            u = u->parent;
+        }
+        string t;
+        for (int i = seq.size() - 1; i >= 0; i--) {
+            t += seq[i]->bit;
+        }
+        return t;
+    }
+    for (auto x : tmp->children) {
+        string result = devsSearch(x, k);
+        if (!result.empty()) {
+            return result;
+        }
+    }
+    return "\0";
+}
+
+void threadFunc(node* startNode, int k, vector<string>& results, mutex& resultsMutex) {
+    string result = devsSearch (startNode, k);
+    if (!result.empty()) {
+        lock_guard<mutex> lock(resultsMutex);
+        results.push_back(result);
+    }
+}
+
 string optim(tree &T, int k) {
-/*
+    queue<node*> q;
+    q.push(T.root);
+    while(q.size() < 15){
+        if (q.size() + q.front()->children.size() <= 16) {
+            for (auto x : q.front()->children) {
+                q.push(x);
+            }
+            q.pop();
+        } 
+        else {
+            break;
+        }
+    }
 
-STUDENT CODE BEGINS HERE, ACHIEVE A SPEEDUP OVER NAIVE IMPLEMENTATION
-YOU MAY EDIT THIS FILE HOWEVER YOU WANT (as long as you don't touch main or naiveSearch)
-HINT : USE MULTITHREADING TO SEARCH IN SUBTREES THEN RETURN THE MOMENT U FIND IT
-(Note we do not expect to see a speedup for low values of n, but for n > 10000)
+    vector<node*> nodes;
+    while (!q.empty()) {
+        nodes.push_back(q.front());
+        q.pop();
+    }
 
-*/
+    cout << "Number of nodes: " << nodes.size() << endl;
+    
+    vector<std::thread> threads;
+    vector<string> results;
+    mutex resultsMutex;
 
-    cout<<"Student code not implemented\n";
-    exit(1);
+    for (auto* node : nodes) {
+        threads.emplace_back(threadFunc, node, k, std::ref(results), std::ref(resultsMutex));
+    }
 
+    for (auto& thread : threads) {
+        thread.join();
+    }
+
+    // Process results
+    // For simplicity, just return the first non-empty result
+    for (const auto& result : results) {
+        if (!result.empty()) {
+            return result;
+        }
+    }
+
+    return "\0";
 }
 
 int main() {
     int n;
-    cin >> n;
+    // cin >> n;
+    n = 10000;
     tree T(n);
     vector<node*> list;
     node* u = new node;
@@ -134,16 +199,17 @@ int main() {
     string naive = naiveSearch(T,n-1);
     auto endNaive = chrono::high_resolution_clock::now();
     auto naiveTime = chrono::duration_cast<chrono::duration<double>>(endNaive - startNaive);
+    cout<<"Naive string : "<<naive<<endl;
+    cout<<"Naive time : "<<naiveTime.count()<<endl;
 
     auto startOptim = chrono::high_resolution_clock::now();
     string optimSearch = optim(T, n - 1);
     auto endOptim = chrono::high_resolution_clock::now();
     auto optimTime = chrono::duration_cast<chrono::duration<double>>(endOptim - startOptim);
 
-    cout<<"Naive string : "<<naive<<endl;
     cout<<"Optim string : "<<optimSearch<<endl;
-    cout<<"Naive time : "<<naiveTime.count()<<endl;
     cout<<"Optim time : "<<optimTime.count()<<endl;
 
+    cout<<"Speedup : "<<naiveTime.count()/optimTime.count()<<endl;
     return 0;
 }

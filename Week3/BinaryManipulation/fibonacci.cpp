@@ -31,9 +31,29 @@ We expect your code to be faster (and completely inaccurate, as even naive metho
 
 */
 
-cout<<"Student code not implemented\n";
-exit(1);
-
+    ll ans[4] = {1,1,1,0};
+    ll m[4] = {1,1,1,0};
+    ll temp[4];
+    ll i = 1;
+    n-=3;
+    while(n >= i){
+        if(n&i){
+            temp[0] = ans[0]*m[0] + ans[1]*m[2];
+            ans[1] = ans[0]*m[1] + ans[1]*m[3];
+            temp[2] = ans[2]*m[0] + ans[3]*m[2];
+            ans[3] = ans[2]*m[1] + ans[3]*m[3];
+            ans[0] = temp[0];
+            ans[2] = temp[2];
+        }
+        temp[1] = m[0]*m[1] + m[1]*m[3];
+        temp[2] = m[2]*m[0] + m[3]*m[2];
+        m[0] = m[0]*m[0] + m[1]*m[2];
+        m[3] = m[2]*m[1] + m[3]*m[3];
+        m[1] = temp[1];
+        m[2] = temp[2];
+        i = i<<1;
+    }
+    return ans[0]+ans[1];
 }
 
 int main(){

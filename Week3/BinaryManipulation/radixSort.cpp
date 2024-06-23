@@ -15,9 +15,25 @@ EXPECTED TIME COMPLEXITY : O(n*log(q)) where q = max(arr)
 
 */
 
-void radixSort (int *arr, int size) {
-    cout<<"STUDENT CODE NOT IMPLEMENTED!\n";
-    exit(1);
+void radixSort (int *arr, int size, int bit = 31) {
+    if (bit < 0) return;
+    if (size == 0) return;
+    int zero[size], one[size], zeroCount = 0, oneCount = 0;
+    for (int i=0; i<size; i++) {
+        if ((arr[i] & (1<<bit)) == 0) {
+            zero[zeroCount++] = arr[i];
+        } else {
+            one[oneCount++] = arr[i];
+        }
+    }
+    for (int i=0; i<zeroCount; i++) {
+        arr[i] = zero[i];
+    }
+    for (int i=0; i<oneCount; i++) {
+        arr[zeroCount+i] = one[i];
+    }
+    radixSort(arr, zeroCount, bit-1);
+    radixSort(arr+zeroCount, oneCount, bit-1);
 }
 
 int main () {

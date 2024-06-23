@@ -20,21 +20,23 @@ int main () {
     auto start = std::chrono::high_resolution_clock::now();
 
 	// TASK 2 CODE BEGINS HERE
-	std::cout<<"Task 2 code not implemented!\n";
-	wait();
-	exit(1);
+	A3.write_to_device(); // copy data from host memory to device memory
+	B3.write_to_device();
+	matMul.run(); // run add_kernel on the device
+	C3.read_from_device(); // copy data from device memory to host memory
+
 	// TASK 2 CODE ENDS HERE
 
     auto end = std::chrono::high_resolution_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
 
-	std::cout<<"C3 is : "<<"\n";
-	for (uint i = 0; i < N; i++) {
-		for (uint j=0; j<N; j++) {
-			std::cout<<C3[i*N + j]<<" ";	
-		}
-		std::cout<<"\n";
-	}	
+	// std::cout<<"C3 is : "<<"\n";
+	// for (uint i = 0; i < N; i++) {
+	// 	for (uint j=0; j<N; j++) {
+	// 		std::cout<<C3[i*N + j]<<" ";	
+	// 	}
+	// 	std::cout<<"\n";
+	// }	
 
     std::cout << "(openCL implementation) Time taken : " << elapsed.count() << "\n";
 

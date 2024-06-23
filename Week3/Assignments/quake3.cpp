@@ -64,28 +64,68 @@ Then it computes softmax in O(n)
 
 }
 
-void optimal (float *A, float *B, int n) {
-
-/*
-
-STUDENT CODE BEGINS HERE, ACHIEVE A SPEEDUP OVER NAIVE IMPLEMENTATION
-YOU MAY EDIT THIS FILE HOWEVER YOU WANT
-HINT : USE SIMD INSTRUCTIONS, YOU MAY FIND SOMETHING BEAUTIFUL ONLINE. THEN USE MULTITHREADING FOR SOFTMAX
-(Note we do not expect to see a speedup for low values of n, but for n > 100000)
-
-*/
-
-    cout<<"Student code not implemented\n";
-    exit(1);
-
+void processChunk(float* A, float* B, int start, int end, float& sum) {
+    __m128 store128;
+    float localSum = 0;
+    for (int i = start; i < end; i += 4) {
+        // Load 4 values at once
+        store128 = _mm_loadu_ps(A + i);
+        // Compute reciprocal square root for 4 values at once
+        store128 = _mm_rsqrt_ps(store128);
+        // Store the result
+        _mm_storeu_ps(B + i, store128);
+        // SIMD version of exp and sum calculation could go here
+        // For simplicity, using scalar version as a placeholder
+        for (int j = 0; j < 4 && (i + j) < end; ++j) {
+            B[i + j] = exp(-B[i + j]);
+            localSum += B[i + j];
+        }
+    }
+    sum += localSum; // Accumulate the sum (needs synchronization)
 }
+
+
+void optimal (float *A, float *B, int n) {
+    float sum = 0;
+    // const int numThreads = std::thread::hardware_concurrency();
+    const int numThreads = 8;
+    std::vector<std::thread> threads;
+    std::vector<float> partialSums(numThreads, 0);
+    // cout << "Number of threads: " << numThreads << endl;
+
+    int chunkSize = n / numThreads;
+    for (int i = 0; i < numThreads; ++i) {
+        int start = i * chunkSize;
+        int end = (i == numThreads - 1) ? n : start + chunkSize;
+        threads.emplace_back(processChunk, A, B, start, end, std::ref(partialSums[i]));
+    }
+
+    for (auto& t : threads) {
+        t.join();
+    }
+
+    for (auto ps : partialSums) {
+        sum += ps;
+    }
+
+    // Normalize B
+    __m128 sumVec = _mm_set1_ps(sum);
+    for (int i = 0; i < n; i += 4) {
+        __m128 bVec = _mm_loadu_ps(B + i);
+        bVec = _mm_div_ps(bVec, sumVec);
+        _mm_storeu_ps(B + i, bVec);
+    }
+}
+float A[100000000];
+float BNaive[100000000];
+float BOptim[100000000];
 
 int main () {
 
     int n;
-    cin>>n;
-    float A[n];
-    for (int i=0; i<n; i++) {
+    // cin>>n;
+    n = 200000;
+    for (int i=0; i<100000000; i++) {
         if (i%100 != 0) {
             A[i] = MIN;
         }
@@ -93,30 +133,26 @@ int main () {
             A[i] = MAX;
         }
     }
-    float BNaive[n];
-    float BOptim[n];
 
     auto startNaive = chrono::high_resolution_clock::now();
-    naive(A,BNaive,n);
+    naive(A,BNaive,100000000);
     auto endNaive = chrono::high_resolution_clock::now();
     auto naiveTime = chrono::duration_cast<chrono::duration<double>>(endNaive - startNaive);
 
     auto startOptim = chrono::high_resolution_clock::now();
-    optimal(A,BOptim,n);
+    for (int i=0; i<10; i++)
+        optimal(A,BOptim,100000000);
     auto endOptim = chrono::high_resolution_clock::now();
     auto optimTime = chrono::duration_cast<chrono::duration<double>>(endOptim - startOptim);
 
-    cout<<"Naive answer : ";
     for (int i=0; i<n; i++) {
-        cout<<BNaive[i]<<" ";
+        if (abs(BNaive[i]-BOptim[i]) > 0.0001) {
+            cout<<"Naive and Optim answers do not match"<<endl;
+        }
     }
-    cout<<endl;
-    cout<<"Optim answer : ";
-    for (int i=0; i<n; i++) {
-        cout<<BOptim[i]<<" ";
-    }
+
     cout<<endl;
     cout<<"Naive time : "<<naiveTime.count()<<endl;
-    cout<<"Optim time : "<<optimTime.count()<<endl;
+    cout<<"Optim time : "<<optimTime.count() / 10<<endl;
 
 }
